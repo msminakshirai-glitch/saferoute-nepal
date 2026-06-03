@@ -1,0 +1,21 @@
+road_name,rainfall_mm,slope_degrees,landslide_history,flood_history
+Dharan-Dhankuta Highway,45,28,2,1
+Kathmandu-Pokhara Highway,10,12,0,0
+Sindhuli Road,80,35,5,3
+Prithvi Highway,25,20,1,1
+Tribhuvan Highway,60,40,4,2
+Koshi Highway,40,22,2,1
+Araniko Highway,55,32,3,2
+Salleri-Phaplu Road,65,38,4,2
+Bhimphedi-Hetauda Road,50,30,3,1
+Banepa-Bardibas Road,35,25,2,1
+Lamosangu-Jiri Road,70,42,5,3
+Dumre-Besisahar Road,45,35,3,2
+Baglung-Beni Road,60,40,4,2
+Dolpa-Juphal Road,30,45,3,1
+Humla-Simikot Road,25,48,2,1
+Taplejung-Phidim Road,55,36,4,2
+Ilam-Phidim Road,40,30,2,1
+Diktel-Khotang Road,65,38,4,3
+Salyan-Musikot Road,35,32,2,1
+Jumla-Manma Road,20,40,2,1

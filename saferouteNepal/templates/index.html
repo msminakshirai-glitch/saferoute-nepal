@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SafeRoute Nepal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f0f2f5;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #c0392b, #922b21);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .header h1 { font-size: 26px; font-weight: 700; }
+        .header p  { font-size: 13px; opacity: 0.85; margin-top: 3px; }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            padding: 12px 30px;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            font-size: 13px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .legend span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+        .dot.red    { background: #e74c3c; }
+        .dot.orange { background: #e67e22; }
+        .dot.green  { background: #27ae60; }
+
+        /* SEARCH BOX */
+        .search-box {
+            background: white;
+            padding: 20px 30px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .search-box label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .search-box select {
+            padding: 9px 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 200px;
+            background: #fafafa;
+        }
+
+        .search-box button {
+            padding: 10px 24px;
+            background: #c0392b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .search-box button:hover { background: #a93226; }
+
+        /* RESULT BOX */
+        .route-result {
+            display: none;
+            margin: 20px 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .route-result h3 {
+            background: #2c3e50;
+            color: white;
+            padding: 12px 18px;
+            font-size: 15px;
+        }
+
+        .route-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .route-table th {
+            background: #ecf0f1;
+            color: #2c3e50;
+            padding: 10px 14px;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .route-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+
+        .confidence {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .map-container { width: 100%; height: 480px; }
+
+        .table-section { padding: 24px 30px; }
+        .table-section h2 { font-size: 18px; color: #2c3e50; margin-bottom: 14px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        th {
+            background-color: #c0392b;
+            color: white;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: #fdf6f6; }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .badge.HIGH   { background: #e74c3c; }
+        .badge.MEDIUM { background: #e67e22; }
+        .badge.LOW    { background: #27ae60; }
+
+        .rain-small { font-size: 11px; color: #888; margin-top: 2px; }
+
+        .footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🏔️ SafeRoute Nepal</h1>
+        <p>AI-powered 72-hour road risk forecast for landslides and floods</p>
+    </div>
+
+    <div class="legend">
+        <b>Risk Levels:</b>
+        <span><span class="dot red"></span> HIGH — Avoid if possible</span>
+        <span><span class="dot orange"></span> MEDIUM — Travel with caution</span>
+        <span><span class="dot green"></span> LOW — Safe to travel</span>
+    </div>
+
+    <!-- FROM / TO SEARCH -->
+    <div class="search-box">
+        <div>
+            <label>From</label>
+            <select id="from-road">
+                <option value="">-- Select starting road --</option>
+                {% for road in roads %}
+                <option value="{{ road.name }}">{{ road.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>To</label>
+            <select id="to-road">
+                <option value="">-- Select destination road --</option>
+                {% for road in roads %}
+                <option value="{{ road.name }}">{{ road.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button onclick="checkRoute()">Check Route</button>
+    </div>
+
+    <!-- ROUTE RESULT -->
+    <div class="route-result" id="route-result">
+        <h3 id="route-title">Route Risk Summary</h3>
+        <table class="route-table">
+            <tr>
+                <th>Forecast</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Confidence</th>
+            </tr>
+            <tr>
+                <td>Today (24hr)</td>
+                <td id="from-today"></td>
+                <td id="to-today"></td>
+                <td class="confidence">85% confidence</td>
+            </tr>
+            <tr>
+                <td>Tomorrow (48hr)</td>
+                <td id="from-tomorrow"></td>
+                <td id="to-tomorrow"></td>
+                <td class="confidence">70% confidence</td>
+            </tr>
+            <tr>
+                <td>Day 3 (72hr)</td>
+                <td id="from-day3"></td>
+                <td id="to-day3"></td>
+                <td class="confidence">55% confidence</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="map-container">
+        {{ map_html | safe }}
+    </div>
+
+    <div class="table-section">
+        <h2>📋 72-Hour Road Risk Report</h2>
+        <table>
+            <tr>
+                <th>Road Name</th>
+                <th>Today <span style="font-weight:300;font-size:11px">(85% confidence)</span></th>
+                <th>Tomorrow <span style="font-weight:300;font-size:11px">(70% confidence)</span></th>
+                <th>Day 3 <span style="font-weight:300;font-size:11px">(55% confidence)</span></th>
+            </tr>
+            {% for road in roads %}
+            <tr>
+                <td><b>{{ road.name }}</b></td>
+                <td>
+                    <span class="badge {{ road.risk_today }}">{{ road.risk_today }}</span>
+                    <div class="rain-small">{{ road.rain_today }} mm</div>
+                </td>
+                <td>
+                    <span class="badge {{ road.risk_tomorrow }}">{{ road.risk_tomorrow }}</span>
+                    <div class="rain-small">{{ road.rain_tomorrow }} mm</div>
+                </td>
+                <td>
+                    <span class="badge {{ road.risk_day3 }}">{{ road.risk_day3 }}</span>
+                    <div class="rain-small">{{ road.rain_day3 }} mm</div>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="footer">
+        SafeRoute Nepal © 2026 · Data updates every hour · Built for Nepali travelers
+    </div>
+
+    <script>
+        // Store all road data from Python
+        const roadData = {
+            {% for road in roads %}
+            "{{ road.name }}": {
+                today: "{{ road.risk_today }}",
+                tomorrow: "{{ road.risk_tomorrow }}",
+                day3: "{{ road.risk_day3 }}"
+            },
+            {% endfor %}
+        };
+
+        function getBadge(risk) {
+            return `<span class="badge ${risk}">${risk}</span>`;
+        }
+
+        function checkRoute() {
+            const from = document.getElementById("from-road").value;
+            const to   = document.getElementById("to-road").value;
+
+            if (!from || !to) {
+                alert("Please select both From and To roads.");
+                return;
+            }
+
+            if (from === to) {
+                alert("Please select two different roads.");
+                return;
+            }
+
+            const fromData = roadData[from];
+            const toData   = roadData[to];
+
+            document.getElementById("route-title").innerText
+                = "Route: " + from + "  →  " + to;
+
+            document.getElementById("from-today").innerHTML    = getBadge(fromData.today);
+            document.getElementById("from-tomorrow").innerHTML = getBadge(fromData.tomorrow);
+            document.getElementById("from-day3").innerHTML     = getBadge(fromData.day3);
+
+            document.getElementById("to-today").innerHTML    = getBadge(toData.today);
+            document.getElementById("to-tomorrow").innerHTML = getBadge(toData.tomorrow);
+            document.getElementById("to-day3").innerHTML     = getBadge(toData.day3);
+
+            document.getElementById("route-result").style.display = "block";
+        }
+    </script>
+
+</body>
+</html>
